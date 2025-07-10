@@ -1,0 +1,28 @@
+version: '3'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: user
+      POSTGRES_DB: iptv
+    ports:
+      - "5432:5432"
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://user:pass@db:5432/iptv
+      JWT_SECRET: your-secret
+      MAILGUN_API_KEY: key
+      MAILGUN_DOMAIN: domain
+      APP_URL: https://yourdomain.com
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:3001

@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      Int           @id @default(autoincrement())
+  email                   String        @unique
+  password                String
+  role                    String        @default("user")
+  xcUsername              String?
+  xcPassword              String?
+  serverUrl               String?
+  m3uLink                 String?
+  backupXcUsername        String?
+  backupXcPassword        String?
+  backupServerUrl         String?
+  adultContent            Boolean       @default(false)
+  premiumPlayer           Boolean       @default(false)
+  vodEnabled              Boolean       @default(false)
+  customServices          Json?         // [{name: string, enabled: boolean}]
+  subscriptionExpiration  DateTime?
+  trialStatus             Boolean       @default(false)
+  paymentStatus           String?
+  paymentMethod           String?
+  referralCode            String        @unique
+  referredBy              String?
+  preferences             Json?         // {tutorialsDisabled: boolean, etc.}
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  tickets                 Ticket[]
+  notifications           Notification[]
+  activityLogs            ActivityLog[]
+  auditLogs               AuditLog[]
+  transactions            Transaction[]
+  repliesAsUser           Reply[]       @relation("UserReplies")
+  repliesAsAdmin          Reply[]       @relation("AdminReplies")
+}
+
+model Ticket {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  subject    String
+  description String
+  status     String    @default("open")
+  priority   String    @default("medium")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id])
+  replies    Reply[]
+}
+
+model Reply {
+  id        Int       @id @default(autoincrement())
+  ticketId  Int
+  userId    Int?
+  adminId   Int?
+  message   String
+  createdAt DateTime  @default(now())
+  ticket    Ticket    @relation(fields: [ticketId], references: [id])
+  user      User?     @relation("UserReplies", fields: [userId], references: [id])
+  admin     User?     @relation("AdminReplies", fields: [adminId], references: [id])
+}
+
+model EmailTemplate {
+  id        Int       @id @default(autoincrement())
+  name      String
+  content   String    // MJML content
+  version   Int
+  createdAt DateTime  @default(now())
+}
+
+model Price {
+  id        Int       @id @default(autoincrement())
+  type       String    // subscription/add-on
+  name      String
+  amount    Float
+}
+
+model CustomService {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description  String?
+  enabled     Boolean   @default(true)
+}
+
+model Branding {
+  id             Int      @id @default(autoincrement())
+  logoUrl        String?
+  faviconUrl     String?
+  primaryColor   String   @default("#0000ff") // electric blue
+  secondaryColor String   @default("#333333")
+}
+
+model Footer {
+  id      Int    @id @default(autoincrement())
+  content String // HTML
+}
+
+model PageTitle {
+  id    Int    @id @default(autoincrement())
+  page  String
+  title String
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  adminId   Int
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+  admin     User     @relation(fields: [adminId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references [id])
+}
+
+model ServiceStatus {
+  id        Int      @id @default(autoincrement())
+  status    String   @default("operational")
+  message   String?
+  updatedAt DateTime @updatedAt
+}
+
+model News {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model FAQ {
+  id       Int       @id @default(autoincrement())
+  question String
+  answer   String
+  tags     String[]
+}
+
+model AppDownload {
+  id   Int    @id @default(autoincrement())
+  name String
+  link String
+  code String?
+}
+
+model Tutorial {
+  id      Int    @id @default(autoincrement())
+  title   String
+  content Json   // [steps]
+  forRole String // user or admin
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  amount    Float
+  status    String
+  method    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references [id])
+}
